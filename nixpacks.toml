@@ -1,0 +1,14 @@
+[variables]
+NODE_ENV = "production"
+
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["cd automation && npm ci"]
+
+[phases.build] 
+cmds = ["echo 'Build completed for automation service'"]
+
+[start]
+cmd = "cd automation && node index.js"

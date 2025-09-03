@@ -1,0 +1,25 @@
+{
+  "name": "smolpot-backend",
+  "version": "1.0.0",
+  "description": "SmolPot Backend Services - Automation, Database, and API",
+  "main": "automation/index.js",
+  "scripts": {
+    "start": "cd automation && node index.js",
+    "automation": "cd automation && node index.js",
+    "dev": "cd automation && npm run dev",
+    "install-automation": "cd automation && npm install",
+    "health": "cd automation && node health-server.js"
+  },
+  "keywords": [
+    "blockchain",
+    "automation",
+    "lottery",
+    "ethereum",
+    "abstract"
+  ],
+  "author": "Tamar Pinder",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
