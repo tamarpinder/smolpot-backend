@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.local
+logs/
+*.log
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+RAILWAY_ENV_VARS.txt
+*DEPLOYMENT_SUMMARY.md
