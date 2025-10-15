@@ -1,28 +1,783 @@
 [
-  "function getPotState() view returns (uint256 totalAmount, uint256 entryCount, uint256 uniqueParticipants, uint256 timeRemaining, bool isActive, uint256 potId)",
-  "function getConfig() view returns (tuple(uint256 timerDuration, uint256 minParticipants, uint256 idleTimeout, uint256 feePercentage, uint256 minEntryAmount))",
-  "function getEntry(uint256 index) view returns (tuple(address user, uint256 amount, uint256 timestamp))",
-  "function owner() view returns (address)",
-  "function getCurrentPot() view returns (uint256, uint256, uint256, uint256, bool, uint256)",
-  "function potState() view returns (uint256, uint256, uint256, uint256, bool, uint256)",
-  "function currentPot() view returns (uint256, uint256, uint256, bool)",
-  "function entries(uint256) view returns (address, uint256, uint256)",
-  "function enterPot() payable",
-  "function enterPotWithAmount(uint256 amount) payable",
-  "function enterPotFor(address player, uint256 amount)",
-  "function joinPot() payable",
-  "function lockGame()",
-  "function finishGame(bytes32 eosBlockHash)",
-  "function setConfig(uint256 timerDuration, uint256 minParticipants, uint256 idleTimeout, uint256 feePercentage, uint256 minEntryAmount)",
-  "function setOperatorApproval(address operator, bool isApproved)",
-  "function isApprovedOperator(address operator) view returns (bool)",
-  "function withdrawFees()",
-  "function emergencyPause(bool pause)",
-  "event PotEntered(address indexed user, uint256 amount, uint256 potId)",
-  "event PotStarted(uint256 potId, uint256 timerDuration)",
-  "event PotEnded(uint256 potId, address indexed winner, uint256 totalAmount)",
-  "event GameLocked(uint256 indexed potId, uint256 timestamp)",
-  "event GameFinished(uint256 indexed potId, address indexed winner, bytes32 eosBlockHash)",
-  "event ConfigUpdated(uint256 timerDuration, uint256 minParticipants, uint256 idleTimeout, uint256 feePercentage, uint256 minEntryAmount)",
-  "event OperatorApprovalChanged(address indexed operator, bool isApproved)"
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_smolTokenAddress",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "_safeOwner",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_timerDuration",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_minParticipants",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_idleTimeout",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_feePercentage",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_minEntryAmount",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "timerDuration",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "minParticipants",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "idleTimeout",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "feePercentage",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "minEntryAmount",
+                "type": "uint256"
+            }
+        ],
+        "name": "ConfigUpdated",
+        "type": "event"
+    },
+    {
+        "inputs": [],
+        "name": "emergencyCancel",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "player",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "enterPotFor",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "_eosBlockHash",
+                "type": "bytes32"
+            }
+        ],
+        "name": "finishGame",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "potId",
+                "type": "uint256"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "winner",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "prizeAmount",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "bytes32",
+                "name": "eosBlockHash",
+                "type": "bytes32"
+            }
+        ],
+        "name": "GameFinished",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "potId",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "totalAmount",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "totalTickets",
+                "type": "uint256"
+            }
+        ],
+        "name": "GameLocked",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "potId",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "startTime",
+                "type": "uint256"
+            }
+        ],
+        "name": "GameStarted",
+        "type": "event"
+    },
+    {
+        "inputs": [],
+        "name": "lockGame",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "operator",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "bool",
+                "name": "isApproved",
+                "type": "bool"
+            }
+        ],
+        "name": "OperatorApprovalSet",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "potId",
+                "type": "uint256"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "player",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "ticketStart",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "ticketEnd",
+                "type": "uint256"
+            }
+        ],
+        "name": "PlayerEntered",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_operator",
+                "type": "address"
+            },
+            {
+                "internalType": "bool",
+                "name": "_isApproved",
+                "type": "bool"
+            }
+        ],
+        "name": "setOperatorApproval",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "startGame",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "newOwner",
+                "type": "address"
+            }
+        ],
+        "name": "transferOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_timerDuration",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_minParticipants",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_idleTimeout",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_feePercentage",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_minEntryAmount",
+                "type": "uint256"
+            }
+        ],
+        "name": "updateConfig",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "newSafeOwner",
+                "type": "address"
+            }
+        ],
+        "name": "updateSafeOwner",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "currentPhase",
+        "outputs": [
+            {
+                "internalType": "enum SmolPotCore.GamePhase",
+                "name": "",
+                "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "currentPotId",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "entries",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "player",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "ticketStart",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "ticketEnd",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "feePercentage",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "gameHistory",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "potId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "winner",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "prizeAmount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "eosBlockHash",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "uint256",
+                "name": "timestamp",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "gameStartTime",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getCurrentGameState",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "potId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "enum SmolPotCore.GamePhase",
+                "name": "phase",
+                "type": "uint8"
+            },
+            {
+                "internalType": "uint256",
+                "name": "startTime",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "totalAmount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "tickets",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "playerCount",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "index",
+                "type": "uint256"
+            }
+        ],
+        "name": "getEntry",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "player",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "ticketStart",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "ticketEnd",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getEntryCount",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "index",
+                "type": "uint256"
+            }
+        ],
+        "name": "getGameHistory",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "potId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "winner",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "prizeAmount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "eosBlockHash",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "uint256",
+                "name": "timestamp",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getGameHistoryCount",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getTimeRemaining",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "hasTimerExpired",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "idleTimeout",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "isApprovedOperator",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "minEntryAmount",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "minParticipants",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "playerTotalBets",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "safeOwner",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "smolToken",
+        "outputs": [
+            {
+                "internalType": "contract ISMOL",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "timerDuration",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "totalPotAmount",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "totalTickets",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    }
 ]

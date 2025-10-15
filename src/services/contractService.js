@@ -108,7 +108,7 @@ class ContractService {
   }
 
   /**
-   * Get the current pot state
+   * Get the current game state
    * @returns {Promise<object>}
    */
   async getPotState() {
@@ -117,14 +117,14 @@ class ContractService {
     }
 
     try {
-      const state = await this.smolPotCore.getPotState();
+      const state = await this.smolPotCore.getCurrentGameState();
       return {
+        potId: state.potId.toString(),
+        phase: state.phase, // 0=IDLE, 1=BETTING, 2=LOCKED, 3=COMPLETE
+        startTime: state.startTime.toString(),
         totalAmount: state.totalAmount.toString(),
-        entryCount: state.entryCount.toString(),
-        uniqueParticipants: state.uniqueParticipants.toString(),
-        timeRemaining: state.timeRemaining.toString(),
-        isActive: state.isActive,
-        potId: state.potId.toString()
+        tickets: state.tickets.toString(),
+        playerCount: state.playerCount.toString()
       };
     } catch (error) {
       logger.error('Failed to get pot state', { error: error.message });
