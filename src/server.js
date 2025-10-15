@@ -21,6 +21,7 @@ const WalletService = require('./services/walletService');
 const ContractService = require('./services/contractService');
 const SupabaseService = require('./services/supabaseService');
 const EosService = require('./services/eosService');
+const GameManager = require('./services/gameManager');
 
 // Routes
 const betRoutes = require('./routes/betRoutes');
@@ -106,7 +107,8 @@ app.get('/health', (req, res) => {
       wallet: WalletService.getInstance().isInitialized(),
       contract: ContractService.getInstance().isInitialized(),
       supabase: SupabaseService.getInstance().isInitialized(),
-      eos: EosService.getInstance().isInitialized()
+      eos: EosService.getInstance().isInitialized(),
+      gameManager: GameManager.getInstance().isManagerRunning()
     }
   });
 });
@@ -150,53 +152,48 @@ async function initializeServices() {
     logger.info('Initializing SmolPot Backend Services...');
 
     // Initialize services in order
-    logger.info('1/4 Initializing Treasury Wallet Service...');
+    logger.info('1/5 Initializing Treasury Wallet Service...');
     const walletService = WalletService.getInstance();
     await walletService.initialize();
 
-    logger.info('2/4 Initializing Contract Service...');
+    logger.info('2/5 Initializing Contract Service...');
     const contractService = ContractService.getInstance();
     await contractService.initialize();
 
-    logger.info('3/4 Initializing Supabase Service...');
+    logger.info('3/5 Initializing Supabase Service...');
     const supabaseService = SupabaseService.getInstance();
     await supabaseService.initialize();
 
-    logger.info('4/4 Initializing EOS Service...');
+    logger.info('4/5 Initializing EOS Service...');
     const eosService = EosService.getInstance();
     // EOS service initializes in constructor
 
-    // Verify Treasury Wallet is approved as operator (if function exists)
-    const treasuryAddress = walletService.getTreasuryAddress();
-    try {
-      const isApproved = await contractService.isApprovedOperator(treasuryAddress);
+    logger.info('5/5 Initializing Game Manager...');
+    const gameManager = GameManager.getInstance();
+    await gameManager.initialize();
 
-      if (!isApproved) {
-        logger.warn(
-          '⚠️  WARNING: Treasury Wallet is NOT approved as an operator on SmolPotCore contract!'
-        );
-        logger.warn(
-          `Please call setOperatorApproval("${treasuryAddress}", true) from the contract owner.`
-        );
-      } else {
-        logger.info('✓ Treasury Wallet is approved as operator');
-      }
-    } catch (error) {
+    // Verify Treasury Wallet is approved as operator
+    const treasuryAddress = walletService.getTreasuryAddress();
+    const isApproved = await contractService.isApprovedOperator(treasuryAddress);
+
+    if (!isApproved) {
       logger.warn(
-        '⚠️  Could not check operator approval (function may not exist in current contract)'
+        '⚠️  WARNING: Treasury Wallet is NOT approved as an operator on SmolPotCore contract!'
       );
       logger.warn(
-        'Note: The smart contract needs to be refactored for Phase 2 operator model'
+        `Please call setOperatorApproval("${treasuryAddress}", true) from the contract owner.`
       );
+    } else {
+      logger.info('✓ Treasury Wallet is approved as operator');
     }
 
     // Get initial pot state
     const potState = await contractService.getPotState();
     logger.info('Current pot state', {
       potId: potState.potId,
+      phase: potState.phase,
       totalAmount: potState.totalAmount,
-      entryCount: potState.entryCount,
-      isActive: potState.isActive
+      tickets: potState.tickets
     });
 
     logger.info('✓ All services initialized successfully');
@@ -218,6 +215,11 @@ async function startServer() {
     // Initialize all services first
     await initializeServices();
 
+    // Start Game Manager
+    const gameManager = GameManager.getInstance();
+    gameManager.start();
+    logger.info('✓ Game Manager started');
+
     // Start Express server
     app.listen(PORT, () => {
       logger.info('=================================');
@@ -226,6 +228,7 @@ async function startServer() {
       logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
       logger.info(`Port: ${PORT}`);
       logger.info(`Treasury Wallet: ${WalletService.getInstance().getTreasuryAddress()}`);
+      logger.info(`Game Manager: Running`);
       logger.info('=================================');
     });
   } catch (error) {
@@ -258,11 +261,21 @@ process.on('unhandledRejection', (reason, promise) => {
 // Graceful shutdown
 process.on('SIGTERM', () => {
   logger.info('SIGTERM received, shutting down gracefully...');
+  const gameManager = GameManager.getInstance();
+  if (gameManager.isManagerRunning()) {
+    gameManager.stop();
+    logger.info('✓ Game Manager stopped');
+  }
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
   logger.info('SIGINT received, shutting down gracefully...');
+  const gameManager = GameManager.getInstance();
+  if (gameManager.isManagerRunning()) {
+    gameManager.stop();
+    logger.info('✓ Game Manager stopped');
+  }
   process.exit(0);
 });
 

@@ -409,6 +409,107 @@ class SupabaseService {
   }
 
   /**
+   * Create EOS proof record for verification
+   * @param {object} proofData
+   * @returns {Promise<object>} Created proof record
+   */
+  async createEosProof(proofData) {
+    if (!this.initialized) {
+      throw new Error('SupabaseService not initialized. Call initialize() first.');
+    }
+
+    try {
+      const { data, error } = await this.client
+        .from('eos_proofs')
+        .insert([proofData])
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      logger.info('EOS proof created', {
+        pot_id: proofData.pot_id,
+        block_num: proofData.eos_block_number
+      });
+
+      return data;
+    } catch (error) {
+      logger.error('Failed to create EOS proof', {
+        error: error.message,
+        proof_data: proofData
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Get game round by pot ID
+   * @param {string} potId
+   * @returns {Promise<object|null>} Game round or null
+   */
+  async getGameRoundByPotId(potId) {
+    if (!this.initialized) {
+      throw new Error('SupabaseService not initialized. Call initialize() first.');
+    }
+
+    try {
+      const { data, error } = await this.client
+        .from('game_rounds')
+        .select('*')
+        .eq('pot_id', potId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      logger.error('Failed to get game round by pot ID', {
+        error: error.message,
+        pot_id: potId
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Update game round by pot ID
+   * @param {string} potId
+   * @param {object} updates
+   * @returns {Promise<object>} Updated game round
+   */
+  async updateGameRoundByPotId(potId, updates) {
+    if (!this.initialized) {
+      throw new Error('SupabaseService not initialized. Call initialize() first.');
+    }
+
+    try {
+      const { data, error } = await this.client
+        .from('game_rounds')
+        .update(updates)
+        .eq('pot_id', potId)
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      logger.info('Game round updated by pot ID', { pot_id: potId, updates });
+      return data;
+    } catch (error) {
+      logger.error('Failed to update game round by pot ID', {
+        error: error.message,
+        pot_id: potId
+      });
+      throw error;
+    }
+  }
+
+  /**
    * Get the Supabase client (for advanced usage)
    */
   getClient() {
